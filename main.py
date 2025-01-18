@@ -1,9 +1,9 @@
 import asyncio
 import logging
+import csv  # Добавлен импорт csv
 
 from web3 import AsyncWeb3
 from web3 import AsyncHTTPProvider
-
 
 logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 
@@ -50,15 +50,24 @@ async def main():
     private_keys = read_private_keys("private_keys.txt")
     semaphore = asyncio.Semaphore(250)
 
+    # Очищаем или создаём txt и csv файлы
     with open("points.txt", "w", encoding="utf-8") as f:
         f.write("")
+    with open("points.csv", "w", newline="", encoding="utf-8") as csvfile:
+        pass
 
     async def process_wallet(index: int, pk: str):
         wallet_address, balance = await sem_get_token_balance(semaphore, pk)
         balance_eth = int(balance / 10**18)
 
+        # Записываем в txt
         with open("points.txt", "a", encoding="utf-8") as f:
             f.write(f"{wallet_address} | {balance_eth:<5} | {pk}\n")
+
+        # Записываем в csv
+        with open("points.csv", "a", newline="", encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([wallet_address, balance_eth, pk])
 
     tasks = []
     for i, pk in enumerate(private_keys):
